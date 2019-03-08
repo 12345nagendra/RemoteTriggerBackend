@@ -1,0 +1,111 @@
+apply plugin: 'java'
+apply plugin: 'idea'
+
+group = 'groupId'
+version = '1.0-SNAPSHOT'
+
+description = ""
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    jcenter()
+}
+
+sourceSets {
+    test {
+        java { srcDir 'src/main/java' }
+    }
+}
+dependencies {
+    compile group: 'org.seleniumhq.selenium', name: 'selenium-java', version: '3.5.3'
+    compile group: 'org.testng', name: 'testng', version: '6.11'
+    compile group: 'javax.activation', name: 'activation', version: '1.1.1'
+    compile group: 'javax.mail', name: 'mail', version: '1.4'
+    compile group: 'com.relevantcodes', name: 'extentreports', version: '2.41.2'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+    compile group: 'io.appium', name: 'java-client', version: '5.0.4'
+    compile group: 'joda-time', name: 'joda-time', version: '2.3'
+
+    compile group: 'org.apache.poi', name: 'poi', version: '3.17'
+    compile group: 'org.apache.poi', name: 'poi-ooxml', version: '3.17'
+    compile group: 'commons-codec', name: 'commons-codec', version: '1.10'
+    compile group: 'org.apache.commons', name: 'commons-collections4', version: '4.1'
+    compile group: 'com.github.virtuald', name: 'curvesapi', version: '1.04'
+    compile group: 'org.apache.xmlbeans', name: 'xmlbeans', version: '2.6.0'
+    compile group: 'org.apache.poi', name: 'poi-excelant', version: '3.17'
+//    compile group: 'com.github.noraui', name: 'ojdbc8', version: '12.2.0.1'
+
+    compile group: 'com.googlecode.json-simple', name: 'json-simple', version: '1.1.1'
+
+    compile group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.5.2'
+    compile files('Lib/sikulixapi.jar')
+    compile files('Lib/slack-api-1.5.1-RELEASE.jar')
+    compile files('Lib/postgresql-42.2.5.jar')
+//    compile files('Lib/reporter.jar')
+
+}
+
+def sanity = project.hasProperty("Sanity")
+def smoke = project.hasProperty("Smoke")
+def regression = project.hasProperty("Regression")
+def Promotion = project.hasProperty("Promotion")
+def paymentTime = project.hasProperty("PaymentTiming")
+boolean flag = false
+
+test {
+    useTestNG() {
+        useDefaultListeners = true
+        outputDirectory = file("$projectDir//test-output")
+        if (sanity) {
+            println "Executing Sanity Suite"
+            options.suites("TestSuite/SanitySuite.xml")
+            flag = true
+        }
+        if (smoke) {
+            println "Executing Smoke Suite"
+            options.suites("TestSuite/SmokeSuite.xml")
+            flag = true
+        }
+
+        if (regression) {
+            println "Executing Regression Suite"
+            options.suites("TestSuite/RegressionFull.xml")
+            flag = true
+        }
+
+        if (Promotion) {
+            println "Executing Promotion Suite"
+            options.suites("TestSuite/PromotionSuite.xml")
+            flag = true
+        }
+
+        if (paymentTime) {
+            println "Executing Payment Time Suite"
+            options.suites("TestSuite/PaymentSuite.xml")
+            flag = true
+        }
+        
+        if (!flag  ) {
+            println "Building Project...  No Suite Name Observed \n To Run a suite..please enter command as: \n 1. gradle clean build -PSmoke \n 2. gradle clean build -PSanity \n 3. gradle clean build -PPromotionRegression "
+        }
+    }
+}
+
+tasks.withType(Test) {
+    testLogging {
+        events "passed", "skipped", "failed"
+        //events "passed", "skipped", "failed","standardOut", "standardError"
+    }
+
+    afterSuite { desc, result ->
+        if (!desc.parent) {
+            def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} successes, ${result.failedTestCount} failures, ${result.skippedTestCount} skipped)"
+            def startItem = '|  ', endItem = '  |'
+            def repeatLength = startItem.length() + output.length() + endItem.length()
+            println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            println("Please Check test-output directory for detailed report")
+        }
+    }
+}
