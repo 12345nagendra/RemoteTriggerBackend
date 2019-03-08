@@ -64,6 +64,30 @@ public class AndroidTriggers {
         closedb(con);
     }
 
+    public void insertSpeech(String platform, String triggerMethod, String command, String TableName) throws Exception {
+
+        Connection con = connect();
+        con.setAutoCommit(true);
+
+
+
+        String query = "INSERT INTO \"" + TableName + "\" (\"Platform\",\"STARTTimestamp\",\"ENDTimestamp\",\"TriggerMethod\",\"Status\",\"Command\") " +
+                "VALUES (?, ?, ?, ?,?,?);";
+
+        PreparedStatement ps = con.prepareStatement(query);
+
+        ps.setString(1, platform);
+        ps.setObject(2, System.currentTimeMillis());
+        ps.setObject(3, null);
+        ps.setString(4, triggerMethod);
+        ps.setObject(5, "Queued");
+        ps.setString(6, command);
+
+        ps.execute();
+        System.out.println(ps.toString());
+        closedb(con);
+    }
+
 
     public static void main(String[] args) throws Exception {
 
